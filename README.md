@@ -4,7 +4,7 @@ Implementation for the Mufi Programming Language
 Mufi is a functional, lisp-like language
 
 An example of Mufi syntax can be seen below with the standard library implementation of quicksort
-```
+```lisp
 (defun quicksort (mylist)                                                       
   (if (empty mylist)                                                            
     (list)                                                                      
@@ -13,8 +13,8 @@ An example of Mufi syntax can be seen below with the standard library implementa
          (quicksort (filter (lambda (x) (>= x (head mylist)))
                             (tail mylist))))))
 ```
-Or below is how one could implement the collatz conjecture
-```
+Or below is how one could implement the collatz conjecture (https://en.wikipedia.org/wiki/Collatz_conjecture)
+```lisp
 (defun collatz (x)
   (if (= 1 x)
     (list 1)
@@ -25,13 +25,13 @@ Or below is how one could implement the collatz conjecture
 
 Mufi is interactive, and includes a REPL for experimentation
 
-```
+```lisp
 > (filter isprime (range 0 15))
 [2: NUMBER, 3: NUMBER, 5: NUMBER, 7: NUMBER, 11: NUMBER, 13: NUMBER]: LIST
 ```
 
 With Mufi being a functional language, it is well suited for solving mathematical problems, such as those found on https://projecteuler.net/
-```
+```lisp
 > (sum (filter even (filter (lambda (x) (< x 4000000)) (fibonacci 1000))))
 4613732: NUMBER
 ```
@@ -49,5 +49,4 @@ $ ./mufi.py --test
 
 
 ALL PASSING, 58/58 Passed
-
 ```
