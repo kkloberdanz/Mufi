@@ -1,0 +1,45 @@
+DONE (1) LispObjects (type system):
+    perhaps add this to _evalAtom
+
+DONE (2) Continue parsing until no more tokens left
+    Needs work in Parser::exp (Very fragile code!)
+
+DONE (3) Read from file:
+    Dependant on (2)
+
+(4) Lambdas !
+
+DONE (5) Standard lib
+    Dependant on (2)
+
+(6) Compile to either machine code, LLVM, or bytecode
+
+DONE (7) Implement list syntax ->
+    -(1 2 3 4)-
+    (list 1 2 3 4)
+
+(8) Implement Record (like C struct)
+
+(9) Implement compile-time type checking, automatic type deduction:
+    analyze functions, and determine what the type of the input should be
+
+(10) Implement strings!
+
+(11) Interpreter internal reduce does not behave as expected:
+    Should behave like this:
+        > (- 1 2 3 4)
+        -8: NUMBER
+    Instead behaves like this:
+        > (- 1 2 3 4)
+        -2: NUMBER
+
+(12) Lambdas are destroying variables:
+    > (def l (list 2 4 5 1 6 0))
+    [list: LIST, 2: NUMBER, 4: NUMBER, 5: NUMBER, 1: NUMBER, 6: NUMBER, 0: NUMBER]
+    > (filter (lambda (x) (> 2 x)) l)
+    [1: NUMBER, 0: NUMBER]: LIST
+    > l
+    []: LIST
+    >
+
+(13) Implement garbage collection
