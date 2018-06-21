@@ -5,22 +5,30 @@ Mufi is a functional, lisp-like language
 
 An example of Mufi syntax can be seen below with the standard library implementation of quicksort
 ```lisp
-(defun quicksort (mylist)                                                       
-  (if (empty mylist)                                                            
-    (list)                                                                      
-    (cat (quicksort (filter (lambda (x) (< x (head mylist))) (tail mylist)))
-         (list (head mylist))
-         (quicksort (filter (lambda (x) (>= x (head mylist)))
-                            (tail mylist))))))
+> (defun quicksort (mylist)                                                       
+    (if (empty mylist)                                                            
+      (list)                                                                      
+      (cat (quicksort (filter (lambda (x) (< x (head mylist))) (tail mylist)))
+           (list (head mylist))
+           (quicksort (filter (lambda (x) (>= x (head mylist)))
+                              (tail mylist))))))
+
+> (quicksort (list 3 2 16 1 0))
+[0: NUMBER, 1: NUMBER, 2: NUMBER, 3: NUMBER, 16: NUMBER]: LIST
+> 
 ```
 Or below is how one could implement the collatz conjecture (https://en.wikipedia.org/wiki/Collatz_conjecture)
 ```lisp
-(defun collatz (x)
-  (if (= 1 x)
-    (list 1)
-    (if (= 0 (mod x 2))
-      (append x (collatz (/ x 2)))
-      (append x (collatz (+ 1 (* 3 x)))))))
+>  (defun collatz (x)
+    (if (= 1 x)
+      (list 1)
+      (if (= 0 (mod x 2))
+        (append x (collatz (/ x 2)))
+        (append x (collatz (+ 1 (* 3 x)))))))
+
+> (collatz 13)
+[1: NUMBER, 2: NUMBER, 4: NUMBER, 8: NUMBER, 16: NUMBER, 5: NUMBER, 10: NUMBER, 20: NUMBER, 40: NUMBER, 13: NUMBER]: LIST
+>
 ```
 
 Mufi is interactive, and includes a REPL for experimentation
