@@ -25,9 +25,6 @@
     a
     (gcd b (mod a b))))
 
-(defun square. (n)
-  (*. n n))
-
 (defun square (n)
   (* n n))
 
@@ -42,12 +39,7 @@
 
 (defun abs (x)
   (if (< x 0)
-    (* (- 0 1) x)
-    (x)))
-
-(defun abs. (x)
-  (if (<. x 0.0)
-    (*. (-. 0.0 1.0) x)
+    (- 0 x)
     (x)))
 
 (defun last (l)
