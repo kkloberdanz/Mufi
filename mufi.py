@@ -9,6 +9,8 @@ license = '''
  of this license document, but changing it is not allowed.
 '''
 
+depth_counter = 0
+
 import traceback
 import copy
 import sys
@@ -297,8 +299,6 @@ class LispObject:
     def performOperation(self, op, other):
         if other.lisp_type in ['LIST', 'STRING']:
             return operations_dct[op.string](self, other)
-        elif self.lisp_type == ['LIST', 'STRING']:
-            return operations_dct[op.string](self)
         else:
             if op.string not in self.valid_ops_dct[self.lisp_type] or op.string not in self.valid_ops_dct[other.lisp_type]:
                 raise LispTypeError('unsupported type for op: {}, (Given: {}, {})'.format(op, self, other))
@@ -336,6 +336,7 @@ class AST:
             _, params, body = expr
             return LispObject((params, body), 'LAMBDA'), env
 
+
     def _evalFunction(self, args, func, env):
         if isinstance(func, LispObject):
             return self._evalAtom(func, env), env
@@ -356,8 +357,8 @@ class AST:
                 local_env[param.string] = val.string
             else:
                 local_env[param.string] = val
+        return self._evaluate(expr, local_env)[0], env
 
-        return self._evaluate(expr, local_env)
 
     def _evalAtom(self, expr, env):
         if expr.lisp_type == 'NUMBER':
@@ -409,13 +410,6 @@ class AST:
         env[name.string] = (args, value)
         return value, env
 
-    #def _define_lambda(self, expr, env):
-    #    if len(expr) != 3:
-    #        raise LispSyntaxError("LAMBDA statement must be of form (lambda ARGUMENTS EXPRESSION), got {}".format(expr))
-    #    _, args, value = expr
-    #    env[name.string] = (args, value)
-    #    return value, env
-
     def _evaluateIf(self, expr, env):
         # (if BOOL T_EXPR F_EXPR)
         if len(expr) != 4:
@@ -449,29 +443,40 @@ class AST:
 
     def _evaluate(self, expr, env):
         # takes tokens as input
+
+        global depth_counter
+        depth_counter += 1
+
         if isinstance(expr, list):
             op = expr[0]
             if op.lisp_type == 'DEF':
                 value, env = self._define_var(expr, env)
+                depth_counter -= 1
                 return value, env
 
             elif op.lisp_type == 'DEFUN':
                 value, env = self._define_func(expr, env)
+                depth_counter -= 1
                 return value, env
 
             elif op in env or op.string in env:
+                depth_counter -= 1
                 return self._evalFunction(expr[1:], env[op.string], env)
 
             elif op.lisp_type == 'IF':
+                depth_counter -= 1
                 return self._evaluateIf(expr, env)
 
             elif op.lisp_type == 'LIST':
+                depth_counter -= 1
                 return self._evaluateList(expr, env)
 
             elif op.lisp_type == 'LAMBDA':
+                depth_counter -= 1
                 return self._evaluateLambda(expr, env)
 
             elif op.lisp_type in ('IDENTIFIER', 'NUMBER', 'NIL') and len(expr) == 1:
+                depth_counter -= 1
                 return self._evalAtom(op, env), env
 
             elif op.string not in builtins:
@@ -481,12 +486,15 @@ class AST:
                     raise LispSyntaxError("Runtime Error, expecting at least 2 arguments for OP: {}".format(op))
 
             elif op.lisp_type == 'LEN':
+                depth_counter -= 1
                 return LispObject(len(self._evaluate(expr[1], env)[0].string), 'NUMBER'), env
 
             else:
                 l = [self._evaluate(ex, env)[0] for ex in expr[1:]]
+                depth_counter -= 1
                 return self.reduce(op, l), env
         else:
+            depth_counter -= 1
             return self._evalAtom(expr, env), env
 
 class Parser:
@@ -750,7 +758,8 @@ def test(env={}):
         ('(quicksort (list 1 4 6 2 0 3 4 1 9))', env, "[0: NUMBER, 1: NUMBER, 1: NUMBER, 2: NUMBER, 3: NUMBER, 4: NUMBER, 4: NUMBER, 6: NUMBER, 9: NUMBER]: LIST"),
         ('(fibonacci 10)', env, "[1: NUMBER, 1: NUMBER, 2: NUMBER, 3: NUMBER, 5: NUMBER, 8: NUMBER, 13: NUMBER, 21: NUMBER, 34: NUMBER, 55: NUMBER, 89: NUMBER]: LIST"),
         ('(sum (filter even (filter (lambda (x) (< x 4000000)) (fibonacci 1000))))', env, "4613732: NUMBER"), # https://projecteuler.net/problem=2
-        ('(filter isprime (range (neg 5) 20))', env, "[2: NUMBER, 3: NUMBER, 5: NUMBER, 7: NUMBER, 11: NUMBER, 13: NUMBER, 17: NUMBER, 19: NUMBER]: LIST"), # https://projecteuler.net/problem=2
+        ('(filter isprime (range (neg 5) 20))', env, "[2: NUMBER, 3: NUMBER, 5: NUMBER, 7: NUMBER, 11: NUMBER, 13: NUMBER, 17: NUMBER, 19: NUMBER]: LIST"),
+        ('(def l (list 1 2 3 4 5)) (sum l) (sum l)', env, "15: NUMBER"),
     ]
 
     all_pass = True
