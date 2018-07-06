@@ -665,7 +665,9 @@ def shell(env={}, quiet=False):
     while True:
         try:
             parser.env = env
+
             user_input = input(prompt) + ' '
+
             while user_input != '' and user_input.count('(') > user_input.count(')'):
                 user_input += input() + ' '
 
@@ -677,6 +679,10 @@ def shell(env={}, quiet=False):
 
             value, env, err = interpret(user_input, env, parser)
             print(value)
+
+        except KeyboardInterrupt as ki:
+            print('<CANCELLED>')
+            continue
 
         except EOFError as eof:
             return
