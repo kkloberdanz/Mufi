@@ -79,6 +79,9 @@ builtins = {
     'exp',
 }
 
+class LispMissingStdLib(Exception):
+    pass
+
 class LispSyntaxError(Exception):
     def __init__(self, value):
         self.value = value
@@ -800,7 +803,10 @@ if __name__ == '__main__':
     parser.add_option('--test', action='store_true', default=False, help='Run unit tests')
     options, args = parser.parse_args()
 
-    value, env, err = loadFile(os.getenv('MUFI_STDLIB', 'stdlib.lisp'))
+    try:
+        value, env, err = loadFile(os.getenv('MUFI_STDLIB', 'stdlib.lisp'))
+    except FileNotFoundError as e:
+        raise LispMissingStdLib('Try setting the environment variable MUFI_STDLIB to point the full path to stdlib.lisp')
 
     if options.test:
         test(env)
