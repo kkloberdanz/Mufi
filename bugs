@@ -33,7 +33,7 @@ DONE (7) Implement list syntax ->
         > (- 1 2 3 4)
         -2: NUMBER
 
-(12) Lambdas are destroying variables:
+DONE (12) Lambdas are destroying variables:
     > (def l (list 2 4 5 1 6 0))
     [list: LIST, 2: NUMBER, 4: NUMBER, 5: NUMBER, 1: NUMBER, 6: NUMBER, 0: NUMBER]
     > (filter (lambda (x) (> 2 x)) l)
