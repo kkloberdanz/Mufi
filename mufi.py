@@ -503,12 +503,15 @@ class Parser:
 
     def parse(self, tokens):
         tree = []
-        while tokens and tokens != [Token(')')]:
-            tmp, tokens = self.exp(tokens, [])
-            while tokens and tokens[0] == Token(')'):
-                tokens = tokens[1:]
-            tree.append(tmp)
-        ast = AST(tree)
+        try:
+            while tokens and tokens != [Token(')')]:
+                tmp, tokens = self.exp(tokens, [])
+                while tokens and tokens[0] == Token(')'):
+                    tokens = tokens[1:]
+                tree.append(tmp)
+            ast = AST(tree)
+        except IndexError as ie:
+            raise LispSyntaxError("Syntax error")
         return ast
 
     def match(self, expected, given):
@@ -618,8 +621,7 @@ def interpret(user_input, env, parser=None):
         return value, env, err
 
     except IndexError as ie:
-        traceback.print_exc()
-        msg = 'error: Invalid Syntax'
+        msg = 'error: list out of range'
         err = True
 
     except EOFError as eof:
