@@ -249,7 +249,7 @@ operations_dct = {
     '<='  : lambda x, y: LispObject(str(x <= y), 'BOOL'),
     '<.'  : lambda x, y: LispObject(str(x < y),  'BOOL'),
     'and' : lambda x, y: LispObject(str(convert_bool(x) and convert_bool(y)), 'BOOL'),
-    'or'  : lambda x, y: LispObject(str(convert_bool(x) or  convert_bool(y)), 'BOOL'),
+    'or'  : lambda x, y: LispObject(str(convert_bool(x) or convert_bool(y)), 'BOOL'),
     'append' : lambda x, l: LispObject(l.value + [x], 'LIST'),
     'index' : lambda x, l: l.value[x.value],
     'take' : lambda x, l: LispObject(l.value[:x.value], 'LIST'),
@@ -327,6 +327,9 @@ class AST:
     def __repr__(self):
         return self.__str__()
 
+    def __iter__(self):
+        return (tree for tree in self.tree)
+
     def evaluate(self, env={}):
         for t in self.tree:
             ret = self._evaluate(t, env)
@@ -338,7 +341,6 @@ class AST:
         else:
             _, params, body = expr
             return LispObject((params, body), 'LAMBDA'), env
-
 
     def _evalFunction(self, args, func, env):
         if isinstance(func, LispObject):
@@ -361,7 +363,6 @@ class AST:
             else:
                 local_env[param.string] = val
         return self._evaluate(expr, local_env)[0], env
-
 
     def _evalAtom(self, expr, env):
         if expr.lisp_type == 'NUMBER':
@@ -612,15 +613,45 @@ class Parser:
         else:
             raise LispSyntaxError("Expecting ')' or '(', got {}".format(tok))
 
-def interpret(user_input, env, parser=None):
+class Compiler:
+
+    op_mapping = {
+        '+': 'ADD',
+        '-': 'SUB',
+        '*': 'MUL',
+        '/': 'DIV',
+    }
+
+    def __init__(self):
+        pass
+
+    def compile(self, ast):
+        for tree in ast:
+            self._compile(tree)
+
+    def _compile(self, tree):
+        if isinstance(tree, list):
+            op = tree[0]
+            tail = tree[1:]
+            for sub_tree in tail[::-1]:
+                self._compile(sub_tree)
+            print('\n'.join([self.op_mapping[op.string]] * (len(tree[1:]) - 1)))
+        else:
+            print('PUSH')
+            print(tree.string)
+
+def interpret(user_input, env, parser=None, compiler=False):
     err = False
     if parser is None:
         parser = Parser(env)
     try:
         lex = Lexer(user_input)
         tokens = lex.tokenize()
-        ret = parser.parse(tokens)
-        (value, env) = ret.evaluate(env)
+        ast = parser.parse(tokens)
+        if compiler:
+            Compiler().compile(ast)
+
+        (value, env) = ast.evaluate(env)
         return value, env, err
 
     except IndexError as ie:
@@ -659,7 +690,7 @@ def loadFile(filename, env={}):
         value, env, err = interpret('\n'.join(lines), env, parser)
     return value, env, err
 
-def shell(env={}, quiet=False):
+def shell(env={}, quiet=False, compiler=False):
     if not quiet:
         print(license)
         print('q to exit')
@@ -682,7 +713,7 @@ def shell(env={}, quiet=False):
             elif not user_input or user_input == ' ':
                 continue
 
-            value, env, err = interpret(user_input, env, parser)
+            value, env, err = interpret(user_input, env, parser, compiler)
             print(value)
 
         except KeyboardInterrupt as ki:
@@ -801,7 +832,15 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option('--quiet', action='store_true', default=False, help='Quietly launch shell')
     parser.add_option('--test', action='store_true', default=False, help='Run unit tests')
+    parser.add_option('--compiler',
+                      action='store_true',
+                      default=False,
+                      help='run bytecode compiler')
     options, args = parser.parse_args()
+
+    if options.compiler:
+        shell(compiler=True)
+        sys.exit(0)
 
     try:
         value, env, err = loadFile(os.getenv('MUFI_STDLIB', 'stdlib.lisp'))
