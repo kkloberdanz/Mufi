@@ -622,12 +622,10 @@ class Compiler:
         '/': 'DIV',
     }
 
-    def __init__(self):
-        pass
-
     def compile(self, ast):
         for tree in ast:
             self._compile(tree)
+        print('HALT')
 
     def _compile(self, tree):
         if isinstance(tree, list):
@@ -635,7 +633,9 @@ class Compiler:
             tail = tree[1:]
             for sub_tree in tail[::-1]:
                 self._compile(sub_tree)
-            print('\n'.join([self.op_mapping[op.string]] * (len(tree[1:]) - 1)))
+            num_operations = len(tree[1:]) - 1
+            op_translation = self.op_mapping[op.string]
+            print('\n'.join([op_translation] * num_operations))
         else:
             print('PUSH')
             print(tree.string)
