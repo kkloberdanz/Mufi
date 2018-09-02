@@ -613,6 +613,38 @@ class Parser:
         else:
             raise LispSyntaxError("Expecting ')' or '(', got {}".format(tok))
 
+class ContextStack:
+    def __init__(self):
+        self.stack = []
+        self.address = 0
+
+    def push(self):
+        self.stack.append({})
+
+    def pop(self):
+        self.stack.pop()
+
+    def __getitem__(self, key):
+        return self.stack[-1][key]
+
+    def __contains__(self, item):
+        return item in self.stack[-1]
+
+    def __setitem__(self, key, item):
+        self.stack[-1][key] = item
+
+    def assign_global(self, item):
+        self.stack[-1][item] = self.address
+        self.address += 1
+
+    def __str__(self):
+        s = '[{}]'.format(', '.join(str(dct) for dct in self.stack))
+        return s
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class Compiler:
 
     op_mapping = {
@@ -622,25 +654,46 @@ class Compiler:
         '/': 'DIV',
     }
 
+    def __init__(self):
+        self.variable_to_memory_map = {}
+        self.context_stack = ContextStack()
+        self.context_stack.push()
+        self.instructions = []
+
     def compile(self, ast):
         for tree in ast:
-            self._compile(tree)
-        print('HALT')
+            self.instructions += self._compile(tree)
 
     def _compile(self, tree):
+        instructions = []
         if isinstance(tree, list):
             op = tree[0]
             tail = tree[1:]
-            for sub_tree in tail[::-1]:
-                self._compile(sub_tree)
-            num_operations = len(tree[1:]) - 1
-            op_translation = self.op_mapping[op.string]
-            print('\n'.join([op_translation] * num_operations))
+            if op.lisp_type == 'DEF':
+                variable, expr = tail
+                self.context_stack.assign_global(variable.string)
+                instructions += self._compile(expr)
+                instructions.append('STORE')
+                instructions.append(str(self.context_stack[variable.string]))
+            else:
+                for sub_tree in tail[::-1]:
+                    instructions += self._compile(sub_tree)
+                num_operations = len(tree[1:]) - 1
+                op_translation = self.op_mapping[op.string]
+                instructions += [op_translation] * num_operations
+        elif tree.lisp_type == 'NUMBER':
+            instructions.append('PUSH')
+            instructions.append(tree.string)
+        elif tree.lisp_type == 'IDENTIFIER':
+            instructions.append('LOAD')
+            instructions.append(self.context_stack[tree.string])
         else:
-            print('PUSH')
-            print(tree.string)
+            raise LispSyntaxError('{}'.format(self.tree))
+        return instructions
 
-def interpret(user_input, env, parser=None, compiler=False):
+
+
+def interpret(user_input, env, parser=None, compiler=None):
     err = False
     if parser is None:
         parser = Parser(env)
@@ -648,8 +701,8 @@ def interpret(user_input, env, parser=None, compiler=False):
         lex = Lexer(user_input)
         tokens = lex.tokenize()
         ast = parser.parse(tokens)
-        if compiler:
-            Compiler().compile(ast)
+        if compiler is not None:
+            compiler.compile(ast)
 
         (value, env) = ast.evaluate(env)
         return value, env, err
@@ -690,7 +743,7 @@ def loadFile(filename, env={}):
         value, env, err = interpret('\n'.join(lines), env, parser)
     return value, env, err
 
-def shell(env={}, quiet=False, compiler=False):
+def shell(env={}, quiet=False, compiler=None):
     if not quiet:
         print(license)
         print('q to exit')
@@ -833,13 +886,16 @@ if __name__ == '__main__':
     parser.add_option('--quiet', action='store_true', default=False, help='Quietly launch shell')
     parser.add_option('--test', action='store_true', default=False, help='Run unit tests')
     parser.add_option('--compiler',
-                      action='store_true',
-                      default=False,
+                      action='store',
                       help='run bytecode compiler')
     options, args = parser.parse_args()
 
     if options.compiler:
-        shell(compiler=True)
+        compiler = Compiler()
+        shell(compiler=compiler)
+        with open(options.compiler, 'w') as f:
+            instructions = '\n'.join(str(i) for i in compiler.instructions) + '\nHALT\n'
+            f.write(instructions)
         sys.exit(0)
 
     try:
