@@ -644,7 +644,6 @@ class ContextStack:
     def __repr__(self):
         return self.__str__()
 
-
 class Compiler:
 
     op_mapping = {
@@ -658,11 +657,15 @@ class Compiler:
         self.variable_to_memory_map = {}
         self.context_stack = ContextStack()
         self.context_stack.push()
+        self.global_stack = ContextStack()
+        self.global_stack.push()
         self.instructions = []
+        self.functions = {}
 
     def compile(self, ast):
         for tree in ast:
             self.instructions += self._compile(tree)
+        return self.instructions + ['HALT'] + self.format_functions(self.functions)
 
     def _compile(self, tree):
         instructions = []
@@ -671,10 +674,13 @@ class Compiler:
             tail = tree[1:]
             if op.lisp_type == 'DEF':
                 variable, expr = tail
-                self.context_stack.assign_global(variable.string)
+                self.global_stack.assign_global(variable.string)
                 instructions += self._compile(expr)
                 instructions.append('STORE')
-                instructions.append(str(self.context_stack[variable.string]))
+                instructions.append(str(self.global_stack[variable.string]))
+            elif op.lisp_type == 'DEFUN':
+                name, args, function = tail
+                self.functions[name] = (args, self._compile(function))
             else:
                 for sub_tree in tail[::-1]:
                     instructions += self._compile(sub_tree)
@@ -686,12 +692,16 @@ class Compiler:
             instructions.append(tree.string)
         elif tree.lisp_type == 'IDENTIFIER':
             instructions.append('LOAD')
-            instructions.append(self.context_stack[tree.string])
+            instructions.append(self.global_stack[tree.string])
         else:
             raise LispSyntaxError('{}'.format(self.tree))
         return instructions
 
-
+    def format_functions(self, functions):
+        all_functions = []
+        for function_name, body in functions.items():
+            args, instructions = body
+            all_functions.append([f'{name}:'] + instructions)
 
 def interpret(user_input, env, parser=None, compiler=None):
     err = False

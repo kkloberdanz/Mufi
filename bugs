@@ -13,6 +13,11 @@ DONE (5) Standard lib
     Dependant on (2)
 
 (6) Compile to either machine code, LLVM, or bytecode
+    - bytecode compiler:
+        Functions:
+        * Implement instruction to LOAD / STORE from stack offset
+          Use a variable to store the address of the start of current
+          stack frame, do loads and stores from that offset
 
 DONE (7) Implement list syntax ->
     -(1 2 3 4)-
