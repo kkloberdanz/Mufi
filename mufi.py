@@ -855,6 +855,7 @@ def test(env={}):
         ('(sum (filter even (filter (lambda (x) (< x 4000000)) (fibonacci 1000))))', env, "4613732: NUMBER"), # https://projecteuler.net/problem=2
         ('(filter isprime (range (neg 5) 20))', env, "[2: NUMBER, 3: NUMBER, 5: NUMBER, 7: NUMBER, 11: NUMBER, 13: NUMBER, 17: NUMBER, 19: NUMBER]: LIST"),
         ('(def l (list 1 2 3 4 5)) (sum l) (sum l)', env, "15: NUMBER"),
+        ('(map (lambda (f) (differential f 3.0)) (list (lambda (x) (exp x 2)) (lambda (x) (exp x 3))))', env, "[6.000999999999479: FLOAT, 27.009000999996147: FLOAT]: LIST"),
     ]
 
     all_pass = True
