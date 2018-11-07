@@ -160,3 +160,9 @@
   (if (<= x 1)
     False
     (isprime' x 2 (+ 1 (sqrt x)))))
+
+(defun differential (f x)
+  (/.
+    (-. (f (+. x 0.001))
+        (f x))
+    0.001))
