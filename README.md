@@ -31,6 +31,17 @@ Or below is how one could implement the collatz conjecture (https://en.wikipedia
 >
 ```
 
+One can even to differential calculus with Mufi
+```lisp
+> (defun differential (f x)
+    (/.
+      (-. (f (+. x 0.001))
+          (f x))
+      0.001))
+> (differential (lambda (x) (exp x 3.0)) 5.0)
+75.01500100002545: FLOAT
+```
+
 Mufi is interactive, and includes a REPL for experimentation
 
 ```lisp
