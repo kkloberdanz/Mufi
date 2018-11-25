@@ -64,6 +64,14 @@
 (defun range (begin end)
   (range' begin end (list)))
 
+(defun range.' (begin end l)
+  (if (< begin end)
+    (range.' (+ 1.0 begin) end (append begin l))
+    l))
+
+(defun range. (begin end)
+  (range.' begin end (list)))
+
 (defun empty (l)
   (= 0 (length l)))
 
