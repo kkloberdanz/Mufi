@@ -747,7 +747,7 @@ def shell(env={}, quiet=False, compiler=None):
     if not quiet:
         print(license)
         print('q to exit')
-        prompt = '> '
+        prompt = 'λ '
     else:
         prompt = ''
     parser = Parser(env)
