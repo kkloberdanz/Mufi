@@ -9,8 +9,8 @@
 
 (def e 2.718281828459045)
 
-(def True (= 0 0) )
-(def False (= 1 0) )
+(def True (= 0 0))
+(def False (= 1 0))
 
 (defun length (l)
   (__len__ l))
